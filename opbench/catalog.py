@@ -24,6 +24,8 @@ def canonical(value):
 def case_key(case):
     # Display names, device and timings must never influence matching.
     identity = {k: case[k] for k in ("operator", "params", "dtype", "stage", "execution", "module_mode", "gradient_scope")}
+    if case.get("implementation", "native") != "native":
+        identity["implementation"] = case["implementation"]
     return hashlib.sha256(canonical(identity).encode()).hexdigest()[:24]
 
 
@@ -76,16 +78,24 @@ def normalize_case(raw):
     case = {"operator": op, "category": OPERATORS[op], "params": raw.get("params", {}),
             "dtype": raw.get("dtype", "float32"), "stage": raw.get("stage", "forward"),
             "execution": raw.get("execution", "eager"), "module_mode": raw.get("module_mode", "eval"),
+            "implementation": raw.get("implementation", "native"),
             "gradient_scope": raw.get("gradient_scope", "all" if raw.get("stage") == "backward" else "none")}
     if case["dtype"] not in DTYPES or case["stage"] not in STAGES or case["execution"] != "eager" or case["module_mode"] not in ("train", "eval"):
         raise ValueError("invalid dtype, stage, execution or module_mode")
     if (case["category"] == "optimizer") != (case["stage"] == "optimizer"):
         raise ValueError("optimizer operators require optimizer stage")
+    if case["implementation"] not in ("native", "addmm_loop_v1", "bmm_fp32_sum_v1") or (case["implementation"] != "native" and op != "addbmm"):
+        raise ValueError("unsupported operator implementation")
     if case["gradient_scope"] != ("all" if case["stage"] == "backward" else "none"):
         raise ValueError("gradient_scope must be all for backward, none otherwise")
     validate_params(op, case["params"])
     case["case_key"] = case_key(case)
     case["name"] = raw.get("name") or f"{op} · {canonical(case['params'])} · {case['dtype']} · {case['stage']}"
+    if not isinstance(case["name"], str):
+        raise ValueError("invalid case name")
+    label = {"addmm_loop_v1": "addmm-loop", "bmm_fp32_sum_v1": "bmm+FP32-sum"}.get(case["implementation"])
+    if label and label not in case["name"]:
+        case["name"] += f" · {label} [composite]"
     if not isinstance(case["name"], str) or len(case["name"]) > 2000:
         raise ValueError("invalid case name")
     return case
@@ -98,6 +108,8 @@ def workload(case):
     f = q = None
     cat = OPERATORS[op]
     note = "Logical minimum traffic, not measured device memory traffic."
+    if case.get("implementation", "native") != "native":
+        note += " Explicit GPU composition; casts and intermediate reads/writes are excluded from logical traffic."
     if cat == "matrix":
         m, n, k = (p[x] for x in ("m", "n", "k"))
         b = p.get("batch", 1) if op in ("bmm", "matmul", "addbmm", "baddbmm") else 1
@@ -143,6 +155,7 @@ def expand_template(template):
                 raise ValueError(f"{key} must be a nonempty list")
         for params, dtype, stage in itertools.product(spec["params"], spec.get("dtypes", ["float32"]), spec.get("stages", ["forward"])):
             cases.append(normalize_case({"operator": spec["operator"], "params": params, "dtype": dtype, "stage": stage,
+                                         "implementation": spec.get("implementation", "native"),
                                          "module_mode": spec.get("module_mode", "train" if stage != "forward" else "eval")}))
             if len(cases) > 20000:
                 raise ValueError("template exceeds 20000 cases")

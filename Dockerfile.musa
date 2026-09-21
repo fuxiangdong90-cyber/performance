@@ -1,0 +1,6 @@
+ARG BASE_IMAGE=registry.mthreads.com/mcconline/musa-pytorch-release-public@sha256:58e39c5bd27eaae4df479aa0c36db6fb2afcd4390f11e658db606a4d71248d9f
+FROM ${BASE_IMAGE}
+COPY torch_musa*.whl /tmp/opbench-wheel/
+RUN TORCH_DEVICE_BACKEND_AUTOLOAD=0 python3 -m pip install --no-index --no-deps --force-reinstall /tmp/opbench-wheel/*.whl \
+    && rm -rf /tmp/opbench-wheel
+LABEL opbench.musa.arch="31"

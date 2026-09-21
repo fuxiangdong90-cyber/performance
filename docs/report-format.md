@@ -58,7 +58,12 @@
 | module_mode | train / eval；与 stage 分离 |
 | gradient_scope | backward 为 all，其他为 none |
 | status | pass / failed / unsupported / oom |
-| correctness | 建议 not_checked / finite_only / synthetic；不由 pass 推定正确性 |
+| correctness | not_checked / finite_only / cpu_reference / cpu_reference_failed / synthetic；不由 pass 推定正确性 |
+| implementation | 默认 native；addbmm 可显式选择 bmm_fp32_sum_v1 或历史 addmm_loop_v1，与 native 使用不同 case_key |
+| reference | cpu_reference 必须提供 device=cpu、implementation=native、rtol、atol、max_abs_error、max_scaled_error；cpu_reference 的归一化误差不超过 1；cpu_reference_failed 必须 status=failed 且归一化误差大于 1 |
+| run.backend_arch_list / device_arch | 后端编译支持的架构与实测设备架构；MUSA 不匹配默认拒绝启动 |
+| run.runtime_image | 运行镜像内容 ID（通过容器包装脚本采集） |
+| run.operator_implementations | 非原生实现映射；为空表示全部默认 native |
 | wall_us | pass 必须为正数，其他允许 null |
 | gpu_us / cpu_us | 可空；CPU 采集器输出 null；存在的 GPU 时间必须为正 |
 | samples_us | 正数数组，原始逐次同步 wall 延迟，单位 μs |
@@ -82,3 +87,9 @@ FLOPs、bytes、arithmetic_intensity、TFLOPS、bandwidth 在服务端根据已�
 ## 历史数据
 
 原页面中的 bwd1/bwd2/bwd3 不应猜测为单独输入梯度；原报告已声明矩阵历史用例实际计算全部梯度。迁移前必须取得原始 JSON 和采集代码，确认单位、时间范围、梯度范围及重复策略。当前不提供猜测性自动迁移。
+
+## CPU 参考校验
+
+`--verify-reference` 的逐元素判据为 `abs(actual-reference) <= atol + rtol*abs(reference)`。float64 的 (rtol,atol) 为 (1e-8,1e-8)，float32 为 (1e-3,1e-4)，float16 为 (0.01,0.01)，bfloat16 为 (0.05,0.05)。`max_scaled_error` 是左侧除以右侧后的最大值。NaN/Inf 或任一元素超限均失败；校验与 CPU/GPU 传输均在计时外。默认不启用，不给历史报告追认参考校验。
+
+推荐参考方法为 `run.reference_method=native_cpu_float64_quantized_inputs_v1`：输入与初始参数按目标 dtype 量化后转 float64；保留目标 dtype 对 RMSNorm 默认 epsilon 的影响。reference 额外记录 `compute_dtype=float64`、`input_dtype`。旧报告没有这些字段时，参考计算使用原始 dtype；两者不能混为同一精度验证方法。

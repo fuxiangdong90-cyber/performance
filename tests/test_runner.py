@@ -2,6 +2,7 @@ import json
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 from opbench.catalog import expand_template
 
 try:
@@ -23,6 +24,66 @@ class PrecisionTests(unittest.TestCase):
 
 @unittest.skipIf(torch is None,"install PyTorch to run real operator tests")
 class RunnerTests(unittest.TestCase):
+    def test_composite_addbmm_forward_and_random_vjp(self):
+        from opbench.runner import addbmm_composite
+        torch.manual_seed(37)
+        c=torch.randn(3,5,dtype=torch.float64,requires_grad=True)
+        a=torch.randn(4,3,7,dtype=torch.float64,requires_grad=True)
+        b=torch.randn(4,7,5,dtype=torch.float64,requires_grad=True)
+        v=torch.randn(3,5,dtype=torch.float64)
+        actual=addbmm_composite(torch,c,a,b)
+        expected=torch.addbmm(c,a,b)
+        torch.testing.assert_close(actual,expected,rtol=1e-12,atol=1e-12)
+        got=torch.autograd.grad(actual,(c,a,b),v)
+        wanted=torch.autograd.grad(expected,(c,a,b),v)
+        for x,y in zip(got,wanted):torch.testing.assert_close(x,y,rtol=1e-12,atol=1e-12)
+
+    def test_composite_low_precision_accumulation(self):
+        from opbench.runner import addbmm_composite
+        torch.manual_seed(2026)
+        for dtype in (torch.float16, torch.bfloat16):
+            a=torch.randn(8,32,64,dtype=dtype)
+            b=torch.randn(8,64,32,dtype=dtype)
+            c=torch.randn(32,32,dtype=dtype)
+            expected=torch.addbmm(c.double(),a.double(),b.double()).to(dtype)
+            torch.testing.assert_close(addbmm_composite(torch,c,a,b),expected,rtol=.01,atol=.01)
+
+    def test_high_precision_reference_keeps_quantization_and_rms_epsilon(self):
+        from opbench.runner import make_operation
+        cases=expand_template({'schema_version':1,'operators':[
+            {'operator':'RMSNorm','params':[{'shape':[2,4]}],'dtypes':['bfloat16']},
+            {'operator':'LayerNorm','params':[{'shape':[8,256,64]}],'dtypes':['bfloat16'],'stages':['backward']}]})
+        torch.manual_seed(17); state=torch.random.get_rng_state()
+        rms,_=make_operation(torch,cases[0],'cpu',reference_dtype='float64')
+        torch.random.set_rng_state(state)
+        x=torch.randn(2,4,dtype=torch.bfloat16).double()
+        expected=x*torch.rsqrt(x.square().mean(-1,keepdim=True)+torch.finfo(torch.bfloat16).eps)
+        torch.testing.assert_close(rms(),expected)
+        op,_=make_operation(torch,cases[1],'cpu',reference_dtype='float64')
+        torch.testing.assert_close(op()[-1],torch.full((64,),2048,dtype=torch.float64))
+
+    def test_reference_rejects_wrong_output_and_restores_rng(self):
+        from opbench import runner
+        case=expand_template({'schema_version':1,'operators':[{'operator':'mm','params':[{'m':3,'n':4,'k':5}]}]})[0]
+        original=runner.make_operation
+        calls=[]
+        def corrupt(*args,**kwargs):
+            op,reset=original(*args,**kwargs); calls.append(1)
+            return (lambda:op()+10,reset) if len(calls)==2 else (op,reset)
+        state=torch.random.get_rng_state()
+        with patch.object(runner,'make_operation',side_effect=corrupt):
+            with self.assertRaises(AssertionError):runner.verify_reference(torch,case,'cpu')
+        self.assertTrue(torch.equal(state,torch.random.get_rng_state()))
+
+    def test_reference_checks_composite_and_optimizer(self):
+        from opbench.runner import verify_reference
+        cases=expand_template({'schema_version':1,'operators':[
+            {'operator':'addbmm','implementation':'bmm_fp32_sum_v1','params':[{'batch':2,'m':3,'n':4,'k':5}],'stages':['forward','backward']},
+            {'operator':'adamw','params':[{'elements':32}],'stages':['optimizer']}]})
+        for case in cases:
+            with self.subTest(op=case['operator'],stage=case['stage']):
+                self.assertLessEqual(verify_reference(torch,case,'cpu')['max_scaled_error'],1)
+
     def test_all_operators_forward_backward_optimizer_cpu(self):
         from opbench.runner import measure
         torch.set_num_threads(1)

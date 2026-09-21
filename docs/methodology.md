@@ -38,7 +38,9 @@ I=F/Q；如果有可比精度的峰值算力 P 与带宽 B，可使用 Roofline 
 4. 使用每轮测量的中位数、最近秩 P95、总体标准差；不把其中一种统计量伪称另一种。
 5. backward 计算图在计时外构造，重复 autograd.grad，不积累 .grad；retain_graph 保持输入一致。此模式不同于完整训练 step。
 6. optimizer 默认非 foreach，预先初始化状态；每轮恢复状态后再测量。不是不同参数状态下连续训练的吞吐。
-7. finite_only 只验证没有 NaN/Inf。未实现跨设备独立参考、精度容差和误差报告。
+7. 默认 finite_only 只验证没有 NaN/Inf。`--verify-reference` 在计时外用相同 CPU 随机状态重建输入，先按目标 dtype 量化输入和初始参数，再转 float64 进行原生 CPU 参考计算，比较前向输出、全部梯度或优化器参数；计时执行再次恢复随机状态。容差和最大绝对/归一化误差写入结果，任何元素超限都记 failed。反向参考使用全 1 上游梯度，与计时定义一致；这不是覆盖所有输入分布的数学证明。
+   addbmm 推荐使用显式 `bmm_fp32_sum_v1`：低精度输入在 GPU 上转 FP32，bmm 后求和并加偏置，最后转回输出 dtype。原有 `addmm_loop_v1` 逐批 addmm 实现保留用于解释历史诊断数据。它是组合实现，非原生融合内核；计时包含全部调用，逻辑流量不含类型转换及中间读写，不同实现不配对。
+   RMSNorm 参考显式保留目标 dtype 的默认 epsilon。参考计算不使用 BF16 CPU 累加，以避开已复现的该版本 CPU LayerNorm 低精度梯度问题；参考方法写入 run.reference_method。
 8. 内存指标为框架 allocated 峰值，包含常驻输入/模块/图等；增量另外报告。共享设备上的其他任务可能干扰结果。
 
 ## 参考

@@ -30,6 +30,28 @@ class DatabaseTestCase(unittest.TestCase):
 
 
 class DomainTests(DatabaseTestCase):
+    def test_implementation_identity_and_reference_validation(self):
+        raw={'operator':'addbmm','params':{'batch':2,'m':3,'n':4,'k':5}}
+        native=normalize_case(raw)
+        composite=normalize_case({**raw,'implementation':'addmm_loop_v1'})
+        self.assertNotEqual(native['case_key'],composite['case_key'])
+        self.assertEqual(native['case_key'],normalize_case({**raw,'implementation':'native'})['case_key'])
+        self.assertIn('composite',composite['name'])
+        promoted=normalize_case({**raw,'implementation':'bmm_fp32_sum_v1'})
+        self.assertNotEqual(promoted['case_key'],composite['case_key'])
+        self.assertNotEqual(promoted['case_key'],native['case_key'])
+        payload=report()
+        row=payload['results'][0]
+        row.update(correctness='cpu_reference',reference={'device':'cpu','implementation':'native',
+            'rtol':.001,'atol':.0001,'max_abs_error':0,'max_scaled_error':0,'compute_dtype':'float64','input_dtype':row['dtype']})
+        rid=service.import_report(self.db,payload)['id']
+        self.assertEqual(service.export_report(self.db,rid)['results'][0]['reference'],row['reference'])
+        row['reference']['max_scaled_error']=2
+        with self.assertRaises(ValueError):service.import_report(self.db,payload)
+        row.update(status="failed",correctness="cpu_reference_failed")
+        failed=service.import_report(self.db,payload)["id"]
+        self.assertEqual(service.export_report(self.db,failed)["results"][0]["reference"]["max_scaled_error"],2)
+
     def test_analytic_workload(self):
         case = normalize_case({"operator": "addbmm", "params": {"batch": 8, "m": 256, "n": 256, "k": 64}, "dtype": "bfloat16"})
         w = workload(case)

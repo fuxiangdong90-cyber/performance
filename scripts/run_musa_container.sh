@@ -9,6 +9,7 @@ GPU_NODE=${OPBENCH_MUSA_DEVICE_NODE:-/dev/mtgpu.0}
 CARD=${OPBENCH_MUSA_DRM_CARD:-/dev/dri/card1}
 RENDER=${OPBENCH_MUSA_DRM_RENDER:-/dev/dri/renderD128}
 VISIBLE=${OPBENCH_MUSA_VISIBLE_DEVICES:-0}
+IMAGE_ID=$(docker image inspect "$IMAGE" --format '{{.Id}}' 2>/dev/null || true)
 for path in "$SDK/lib" "$DRIVER" "$GPU_NODE" "$CARD" "$RENDER"; do
   [[ -e "$path" ]] || { echo "Required runtime path is missing: $path" >&2; exit 1; }
 done
@@ -16,7 +17,7 @@ args=(--rm --network none --cap-drop ALL --security-opt no-new-privileges --shm-
   --device "$GPU_NODE" --device "$CARD" --device "$RENDER"
   -v "$ROOT:/workspace" -w /workspace -v "$SDK:/opt/opbench-sdk:ro"
   -e LD_LIBRARY_PATH=/opt/opbench-driver:/opt/opbench-sdk/lib:/usr/local/musa/lib
-  -e "MUSA_VISIBLE_DEVICES=$VISIBLE" --entrypoint python3)
+  -e "MUSA_VISIBLE_DEVICES=$VISIBLE" -e "OPBENCH_RUNTIME_IMAGE=${IMAGE_ID:-$IMAGE}" --entrypoint python3)
 # The vendor image contains driver placeholders. Some libraries use dlopen with
 # an absolute filename, so both loader aliases and absolute paths are required.
 for alias in libmusa.so libmusa.so.1 libmusa.so.4; do

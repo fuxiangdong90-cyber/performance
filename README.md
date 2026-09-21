@@ -48,7 +48,7 @@ python -m opbench.runner --template templates/standard.json --device cuda --warm
 python -m opbench.runner --device cpu --output results/cpu.json --upload http://127.0.0.1:30000
 ```
 
-厂商扩展通过 `--backend-module` 显式加载，设备通过 `--device` 选择，例如已安装对应扩展的环境使用 `--backend-module torch_mlu --device mlu`。该通用接口要求扩展提供 PyTorch 对应的 device / synchronize / Event API；**未在本地验证厂商加速器，不能保证所有版本可用**。不支持的算子会记录状态和错误，继续执行后续用例。退出码：0 全部成功，2 存在 failed/unsupported/oom。
+厂商扩展通过 `--backend-module` 显式加载，设备通过 `--device` 选择，例如已安装对应扩展的环境使用 `--backend-module torch_mlu --device mlu`。该通用接口要求扩展提供 PyTorch 对应的 device / synchronize / Event API；**已在指定 S5000 组合上实测，其他厂商和版本需单独验证**。不支持的算子会记录状态和错误，继续执行后续用例。退出码：0 全部成功，2 存在 failed/unsupported/oom。
 
 ## 3. 已实现的功能
 
@@ -78,9 +78,9 @@ python -m opbench.runner --device cpu --output results/cpu.json --upload http://
 - **反向**：图在计时外准备，计时区间仅包含全部输入/参数梯度。矩阵主体 FLOPs 为前向两倍；反向流量、卷积反向 FLOPs 暂不建模，显示空值。
 - **优化器**：参数和状态初始化在计时外，每轮恢复到相同状态；不将更新操作标成 inference。
 - **显存**：框架 `max_memory_allocated`；另存相对基线增量。不是 reserved 或进程总显存；CPU 为 null。
-- **正确性**：当前为输出/梯度有限性检测 `finite_only`，不等于已通过独立参考精度对比。
+- **正确性**：默认检测输出/梯度有限性（`finite_only`）；`--verify-reference` 在计时外对相同量化输入做 CPU float64 原生参考对比，记录容差及最大误差（`cpu_reference`）。
 
-同配置匹配包含算子、全部参数、dtype、stage、execution、module_mode 和 gradient_scope。仅双方 pass 用例参与几何平均；失败/缺失不填零，不按无穷加速比汇总。不同环境的差异在页面提示。详细说明见 [指标与逆向说明](docs/methodology.md)。
+同配置匹配包含算子、全部参数、dtype、stage、execution、module_mode 、gradient_scope 和 implementation。仅双方 pass 用例参与几何平均；失败/缺失不填零，不按无穷加速比汇总。不同环境的差异在页面提示。详细说明见 [指标与逆向说明](docs/methodology.md)。
 
 ## 5. 数据格式与 API
 
@@ -93,6 +93,8 @@ python -m opbench.runner --device cpu --output results/cpu.json --upload http://
 ## 6. 部署
 
 后端和测试机可分离部署。Ubuntu 的 systemd + Nginx 安装脚本、数据库路径、鉴权和备份步骤见 [部署与运维](docs/deployment.md)。
+
+S5000 已完成全部 28 种算子测试：标准模板两轮均为 273/279 通过、6 个数值超差；冒烟 51/51 通过。完整覆盖清单和误差见 [S5000 验证报告](docs/s5000-validation.md)。
 
 MTT S5000 的固定镜像、驱动挂载、运行命令和兼容问题见 [MUSA 测试环境](docs/musa-testing.md)。
 
@@ -123,7 +125,7 @@ node --test tests/metrics.test.js
 node --check web/app.js
 ```
 
-未安装 PyTorch 时，仅跳过三个真实算子测试；安装后验证 28 种算子的 51 个配置、梯度不累积和优化器重置。GitHub Actions 包含 Linux/Windows 服务测试、Node 指标测试和 Linux CPU 实测。
+未安装 PyTorch 时，跳过真实算子测试；安装后验证 28 种算子的 51 个配置、梯度不累积和优化器重置。GitHub Actions 包含 Linux/Windows 服务测试、Node 指标测试和 Linux CPU 实测。
 
 ## 目录
 

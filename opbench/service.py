@@ -81,6 +81,24 @@ def validate_report(report):
         if not isinstance(samples, list) or len(samples) > 10000 or any(type(x) not in (int, float) or not math.isfinite(x) or x <= 0 for x in samples):
             raise ValueError("invalid samples_us")
         result["samples_us"] = samples
+        if raw.get("reference") is not None:
+            ref = raw["reference"]
+            if not isinstance(ref, dict) or ref.get("device") != "cpu" or ref.get("implementation") != "native":
+                raise ValueError("invalid reference metadata")
+            fields = ("rtol", "atol", "max_abs_error", "max_scaled_error")
+            if any(type(ref.get(k)) not in (int, float) or not math.isfinite(ref[k]) or ref[k] < 0 for k in fields):
+                raise ValueError("invalid reference error/tolerance")
+            checked_pass = raw.get("correctness") == "cpu_reference" and status == "pass" and ref["max_scaled_error"] <= 1
+            checked_fail = raw.get("correctness") == "cpu_reference_failed" and status == "failed" and ref["max_scaled_error"] > 1
+            if ref["atol"] <= 0 or not (checked_pass or checked_fail):
+                raise ValueError("reference check and result status disagree")
+            result["reference"] = {"device": "cpu", "implementation": "native", **{k: ref[k] for k in fields}}
+            if "compute_dtype" in ref:
+                if ref["compute_dtype"] != "float64" or ref.get("input_dtype") != case["dtype"]:
+                    raise ValueError("invalid high precision reference dtype")
+                result["reference"].update(compute_dtype="float64",input_dtype=ref["input_dtype"])
+        elif raw.get("correctness") in ("cpu_reference", "cpu_reference_failed"):
+            raise ValueError("cpu_reference requires reference metadata")
         result["tflops"] = result["flops"] / result["wall_us"] / 1e6 if status == "pass" and result["flops"] is not None else None
         result["bandwidth_gbs"] = result["bytes"] / result["wall_us"] / 1000 if status == "pass" and result["bytes"] is not None else None
         normalized.append(result)
@@ -137,11 +155,12 @@ def compare(path, left_id, right_id):
         c = l or r
         paired = bool(l and r and l["status"] == r["status"] == "pass")
         row = {k: c[k] for k in ("case_key", "name", "operator", "category", "params", "dtype", "stage", "module_mode", "execution", "flops", "bytes", "arithmetic_intensity", "workload_note")}
+        row["implementation"] = c.get("implementation", "native")
         row.update(left=l, right=r, paired=paired, speedup=l["wall_us"]/r["wall_us"] if paired else None,
                    gpu_speedup=l["gpu_us"]/r["gpu_us"] if paired and l["gpu_us"] and r["gpu_us"] else None)
         rows.append(row)
     warnings = []
-    for field in ("torch_version", "backend_version", "precision_policy", "precision_settings", "input_initialization", "timing_method", "cpu_threads", "warmup", "iterations"):
+    for field in ("torch_version", "backend_version", "precision_policy", "precision_settings", "input_initialization", "operator_implementations", "reference_method", "timing_method", "cpu_threads", "warmup", "iterations"):
         if left_report["run"].get(field) != right_report["run"].get(field):
             warnings.append(f"{field}: {left_report['run'].get(field, 'unknown')} → {right_report['run'].get(field, 'unknown')}")
     if left_report["run"].get("synthetic") or right_report["run"].get("synthetic"):
