@@ -19,7 +19,9 @@ def make_operation(torch, case, device):
     inputs = []
 
     def tensor(shape):
-        x = torch.randn(shape, device=device, dtype=dtype, requires_grad=backward)
+        # Initialization is outside timing; CPU generation makes inputs portable
+        # across backends and does not require a vendor random-number GPU kernel.
+        x = torch.randn(shape, device="cpu", dtype=dtype).to(device).requires_grad_(backward)
         inputs.append(x)
         return x
 
@@ -64,7 +66,7 @@ def make_operation(torch, case, device):
         inputs += list(module.parameters())
         forward = lambda: module(x)
     else:
-        x = torch.nn.Parameter(torch.randn(p["elements"], device=device, dtype=dtype))
+        x = torch.nn.Parameter(torch.randn(p["elements"], device="cpu", dtype=dtype).to(device))
         x.grad = torch.full_like(x, 0.01)
         cls = {"sgd": "SGD", "adagrad": "Adagrad", "adam": "Adam", "adamw": "AdamW", "rmsprop": "RMSprop"}[op]
         optimizer = getattr(torch.optim, cls)([x], lr=0.001, foreach=False)
@@ -224,6 +226,7 @@ def main():
            "torch_version": torch.__version__, "backend_version": args.backend_version,
            "timing_method": "synchronized_wall_per_iteration", "precision_policy": "highest; TF32 disabled where exposed",
            "precision_settings": precision_settings,
+           "input_initialization": "cpu_then_copy",
            "cpu_threads": args.threads, "warmup": args.warmup, "iterations": args.iterations, "seed": args.seed,
            "template": template.get("name", args.template), "synthetic": False,
            "timing_note": "Median synchronized wall includes dispatch and terminal synchronization. GPU events may include stream idle time. CPU enqueue excludes final synchronization. Backward graph prepared before timing. CPU stream/enqueue/memory metrics are null."}

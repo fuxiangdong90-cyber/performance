@@ -49,6 +49,7 @@
 | run.device | 必填对象，必须包含设备 name，建议包含 backend、platform |
 | run.timing_method | v1 必须为 synchronized_wall_per_iteration，避免无标记地混合 Event / wall |
 | run.precision_settings | 采集器记录实际精度开关值，包括厂商暴露的 muDNN TF32；历史报告可缺省，缺省不代表关闭 |
+| run.input_initialization | 新采集器为 cpu_then_copy，输入生成和传输在计时外；历史报告可缺省 |
 | operator | catalog.py 中的 28 个名称之一，大小写敏感 |
 | params | 算子参数对象，格式见下表 |
 | dtype | float32 / float16 / bfloat16 / float64 |
