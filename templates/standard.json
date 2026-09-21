@@ -1,0 +1,1008 @@
+{
+  "schema_version": 1,
+  "name": "Standard · 28 operators",
+  "description": "28 类算子，多形状/精度/阶段；运行前用 --dry-run 检查规模。",
+  "operators": [
+    {
+      "operator": "mm",
+      "params": [
+        {
+          "m": 64,
+          "n": 64,
+          "k": 64
+        },
+        {
+          "m": 256,
+          "n": 256,
+          "k": 64
+        },
+        {
+          "m": 256,
+          "n": 1024,
+          "k": 128
+        },
+        {
+          "m": 1024,
+          "n": 1024,
+          "k": 1024
+        }
+      ],
+      "dtypes": [
+        "float32",
+        "float16",
+        "bfloat16"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "matmul",
+      "params": [
+        {
+          "m": 64,
+          "n": 64,
+          "k": 64,
+          "batch": 4
+        },
+        {
+          "m": 256,
+          "n": 256,
+          "k": 64,
+          "batch": 8
+        },
+        {
+          "m": 256,
+          "n": 1024,
+          "k": 128,
+          "batch": 8
+        },
+        {
+          "m": 1024,
+          "n": 1024,
+          "k": 1024,
+          "batch": 4
+        }
+      ],
+      "dtypes": [
+        "float32",
+        "float16",
+        "bfloat16"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "bmm",
+      "params": [
+        {
+          "m": 64,
+          "n": 64,
+          "k": 64,
+          "batch": 4
+        },
+        {
+          "m": 256,
+          "n": 256,
+          "k": 64,
+          "batch": 8
+        },
+        {
+          "m": 256,
+          "n": 1024,
+          "k": 128,
+          "batch": 8
+        },
+        {
+          "m": 1024,
+          "n": 1024,
+          "k": 1024,
+          "batch": 4
+        }
+      ],
+      "dtypes": [
+        "float32",
+        "float16",
+        "bfloat16"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "addmm",
+      "params": [
+        {
+          "m": 64,
+          "n": 64,
+          "k": 64
+        },
+        {
+          "m": 256,
+          "n": 256,
+          "k": 64
+        },
+        {
+          "m": 256,
+          "n": 1024,
+          "k": 128
+        },
+        {
+          "m": 1024,
+          "n": 1024,
+          "k": 1024
+        }
+      ],
+      "dtypes": [
+        "float32",
+        "float16",
+        "bfloat16"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "addbmm",
+      "params": [
+        {
+          "m": 64,
+          "n": 64,
+          "k": 64,
+          "batch": 4
+        },
+        {
+          "m": 256,
+          "n": 256,
+          "k": 64,
+          "batch": 8
+        },
+        {
+          "m": 256,
+          "n": 1024,
+          "k": 128,
+          "batch": 8
+        },
+        {
+          "m": 1024,
+          "n": 1024,
+          "k": 1024,
+          "batch": 4
+        }
+      ],
+      "dtypes": [
+        "float32",
+        "float16",
+        "bfloat16"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "baddbmm",
+      "params": [
+        {
+          "m": 64,
+          "n": 64,
+          "k": 64,
+          "batch": 4
+        },
+        {
+          "m": 256,
+          "n": 256,
+          "k": 64,
+          "batch": 8
+        },
+        {
+          "m": 256,
+          "n": 1024,
+          "k": 128,
+          "batch": 8
+        },
+        {
+          "m": 1024,
+          "n": 1024,
+          "k": 1024,
+          "batch": 4
+        }
+      ],
+      "dtypes": [
+        "float32",
+        "float16",
+        "bfloat16"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "Conv1d",
+      "params": [
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16
+          ],
+          "kernel": 3,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16
+          ],
+          "kernel": 3,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16
+          ],
+          "kernel": 3,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16
+          ],
+          "kernel": 3,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "Conv2d",
+      "params": [
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "Conv3d",
+      "params": [
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16,
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16,
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16,
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16,
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "Conv2dPointwise",
+      "params": [
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16,
+            16
+          ],
+          "kernel": 1,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16,
+            16
+          ],
+          "kernel": 1,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16,
+            16
+          ],
+          "kernel": 1,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16,
+            16
+          ],
+          "kernel": 1,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "ConvTranspose1d",
+      "params": [
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16
+          ],
+          "kernel": 3,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16
+          ],
+          "kernel": 3,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16
+          ],
+          "kernel": 3,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16
+          ],
+          "kernel": 3,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "ConvTranspose2d",
+      "params": [
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "ConvTranspose3d",
+      "params": [
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16,
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 8,
+          "cout": 8,
+          "spatial": [
+            16,
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16,
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 1,
+          "padding": 0,
+          "groups": 1
+        },
+        {
+          "batch": 2,
+          "cin": 32,
+          "cout": 32,
+          "spatial": [
+            16,
+            16,
+            16
+          ],
+          "kernel": 3,
+          "stride": 2,
+          "padding": 0,
+          "groups": 1
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "BatchNorm1d",
+      "params": [
+        {
+          "shape": [
+            4,
+            16,
+            64
+          ]
+        }
+      ],
+      "dtypes": [
+        "float32",
+        "bfloat16"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "BatchNorm2d",
+      "params": [
+        {
+          "shape": [
+            4,
+            16,
+            16,
+            16
+          ]
+        }
+      ],
+      "dtypes": [
+        "float32",
+        "bfloat16"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "BatchNorm3d",
+      "params": [
+        {
+          "shape": [
+            2,
+            8,
+            8,
+            8,
+            8
+          ]
+        }
+      ],
+      "dtypes": [
+        "float32",
+        "bfloat16"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "GroupNorm",
+      "params": [
+        {
+          "shape": [
+            4,
+            16,
+            16,
+            16
+          ],
+          "groups": 4
+        }
+      ],
+      "dtypes": [
+        "float32",
+        "bfloat16"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "LayerNorm",
+      "params": [
+        {
+          "shape": [
+            8,
+            256,
+            64
+          ]
+        }
+      ],
+      "dtypes": [
+        "float32",
+        "bfloat16"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "RMSNorm",
+      "params": [
+        {
+          "shape": [
+            8,
+            256,
+            64
+          ]
+        }
+      ],
+      "dtypes": [
+        "float32",
+        "bfloat16"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "ReLU",
+      "params": [
+        {
+          "elements": 1
+        },
+        {
+          "elements": 64
+        },
+        {
+          "elements": 4096
+        },
+        {
+          "elements": 131072
+        },
+        {
+          "elements": 1048576
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "LeakyReLU",
+      "params": [
+        {
+          "elements": 1
+        },
+        {
+          "elements": 64
+        },
+        {
+          "elements": 4096
+        },
+        {
+          "elements": 131072
+        },
+        {
+          "elements": 1048576
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "GELU",
+      "params": [
+        {
+          "elements": 1
+        },
+        {
+          "elements": 64
+        },
+        {
+          "elements": 4096
+        },
+        {
+          "elements": 131072
+        },
+        {
+          "elements": 1048576
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "SiLU",
+      "params": [
+        {
+          "elements": 1
+        },
+        {
+          "elements": 64
+        },
+        {
+          "elements": 4096
+        },
+        {
+          "elements": 131072
+        },
+        {
+          "elements": 1048576
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "forward",
+        "backward"
+      ]
+    },
+    {
+      "operator": "sgd",
+      "params": [
+        {
+          "elements": 10000
+        },
+        {
+          "elements": 100000
+        },
+        {
+          "elements": 1000000
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "optimizer"
+      ]
+    },
+    {
+      "operator": "adagrad",
+      "params": [
+        {
+          "elements": 10000
+        },
+        {
+          "elements": 100000
+        },
+        {
+          "elements": 1000000
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "optimizer"
+      ]
+    },
+    {
+      "operator": "adam",
+      "params": [
+        {
+          "elements": 10000
+        },
+        {
+          "elements": 100000
+        },
+        {
+          "elements": 1000000
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "optimizer"
+      ]
+    },
+    {
+      "operator": "adamw",
+      "params": [
+        {
+          "elements": 10000
+        },
+        {
+          "elements": 100000
+        },
+        {
+          "elements": 1000000
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "optimizer"
+      ]
+    },
+    {
+      "operator": "rmsprop",
+      "params": [
+        {
+          "elements": 10000
+        },
+        {
+          "elements": 100000
+        },
+        {
+          "elements": 1000000
+        }
+      ],
+      "dtypes": [
+        "float32"
+      ],
+      "stages": [
+        "optimizer"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+services:
+  opbench:
+    build: .
+    ports:
+      - "127.0.0.1:30000:30000"
+    environment:
+      OPBENCH_API_TOKEN: ${OPBENCH_API_TOKEN:?Set OPBENCH_API_TOKEN in .env}
+    volumes:
+      - opbench-data:/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  opbench-data:

@@ -1,0 +1,12 @@
+[project]
+name = "opbench-performance"
+version = "1.0.0"
+description = "Reproducible operator benchmarks, SQLite service and comparison dashboard"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+bench = ["torch>=2.2"]
+
+[tool.setuptools.packages.find]
+include = ["opbench*"]

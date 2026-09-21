@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "run": {
+    "name": "Minimal format example (SYNTHETIC)",
+    "device": {"name": "Example CPU", "backend": "cpu"},
+    "timing_method": "synchronized_wall_per_iteration",
+    "synthetic": true
+  },
+  "results": [{
+    "operator": "mm", "params": {"m": 64, "n": 64, "k": 64},
+    "dtype": "float32", "stage": "forward", "execution": "eager",
+    "module_mode": "eval", "gradient_scope": "none", "status": "pass",
+    "correctness": "synthetic", "wall_us": 20, "gpu_us": null,
+    "cpu_us": null, "p95_us": 22, "stddev_us": 1.247219128924647,
+    "peak_allocated_bytes": null, "peak_delta_bytes": null, "samples_us": [19, 20, 22]
+  }]
+}

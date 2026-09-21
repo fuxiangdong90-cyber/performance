@@ -1,0 +1,1 @@
+{"name":"opbench-web","private":true,"type":"module","scripts":{"test":"node --test tests/metrics.test.js","check":"node --check web/app.js && node --check web/metrics.js"}}
