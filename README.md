@@ -92,6 +92,8 @@ python -m opbench.runner --device cpu --output results/cpu.json --upload http://
 
 ## 6. 部署
 
+后端和测试机可分离部署。Ubuntu 的 systemd + Nginx 安装脚本、数据库路径、鉴权和备份步骤见 [部署与运维](docs/deployment.md)。
+
 单机默认启动即可。内网共享时使用 HTTPS 反向代理并设置 token，前端右上角“访问令牌”填写相同值：
 
 ```bash
