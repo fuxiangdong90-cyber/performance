@@ -1,12 +1,24 @@
 import json
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from opbench.catalog import expand_template
 
 try:
     import torch
 except ImportError:
     torch=None
+
+
+class PrecisionTests(unittest.TestCase):
+    def test_vendor_tf32_is_disabled_and_reported_without_cuda(self):
+        from opbench.runner import configure_precision
+        fake = SimpleNamespace(backends=SimpleNamespace(mudnn=SimpleNamespace(allow_tf32=True)))
+        fake.set_float32_matmul_precision = lambda value: setattr(fake, 'precision', value)
+        fake.get_float32_matmul_precision = lambda: fake.precision
+        result = configure_precision(fake)
+        self.assertFalse(fake.backends.mudnn.allow_tf32)
+        self.assertEqual(result, {'float32_matmul_precision':'highest', 'mudnn.allow_tf32':False})
 
 
 @unittest.skipIf(torch is None,"install PyTorch to run real operator tests")

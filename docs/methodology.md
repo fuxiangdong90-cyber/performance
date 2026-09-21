@@ -31,6 +31,7 @@ I=F/Q；如果有可比精度的峰值算力 P 与带宽 B，可使用 Roofline 
 ## 测量边界
 
 1. 随机种子、CPU 线程数、预热和重复次数写入结果。
+   新采集报告的 `precision_settings` 记录实际读取的开关；除 CUDA/cuDNN 外也关闭厂商暴露的 MUSA/muDNN TF32 开关。没有暴露的开关不假定其状态，不同运行的精度设置会在对比页提示。
 2. CPU 在调用前/后读单调高分辨率时钟；GPU 每轮开始前和末尾同步。
 3. wall 包含 operation 与终止事件提交/同步，GPU events 包含对应流区间，CPU enqueue 只覆盖 operation 调用。
 4. 使用每轮测量的中位数、最近秩 P95、总体标准差；不把其中一种统计量伪称另一种。

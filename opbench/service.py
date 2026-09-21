@@ -141,7 +141,7 @@ def compare(path, left_id, right_id):
                    gpu_speedup=l["gpu_us"]/r["gpu_us"] if paired and l["gpu_us"] and r["gpu_us"] else None)
         rows.append(row)
     warnings = []
-    for field in ("torch_version", "backend_version", "precision_policy", "timing_method", "cpu_threads", "warmup", "iterations"):
+    for field in ("torch_version", "backend_version", "precision_policy", "precision_settings", "timing_method", "cpu_threads", "warmup", "iterations"):
         if left_report["run"].get(field) != right_report["run"].get(field):
             warnings.append(f"{field}: {left_report['run'].get(field, 'unknown')} → {right_report['run'].get(field, 'unknown')}")
     if left_report["run"].get("synthetic") or right_report["run"].get("synthetic"):

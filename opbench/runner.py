@@ -109,6 +109,24 @@ def device_api(torch, device):
     return api
 
 
+def configure_precision(torch):
+    """Disable exposed TF32 controls, including the vendor muDNN switch."""
+    torch.set_float32_matmul_precision("highest")
+    settings = {"float32_matmul_precision": torch.get_float32_matmul_precision()}
+    for path in ("cuda.matmul.allow_tf32", "cudnn.allow_tf32", "cudnn.benchmark",
+                 "musa.matmul.allow_tf32", "mudnn.allow_tf32"):
+        parts = path.split(".")
+        owner = torch.backends
+        for name in parts[:-1]:
+            owner = getattr(owner, name, None)
+            if owner is None:
+                break
+        if owner is not None and hasattr(owner, parts[-1]):
+            setattr(owner, parts[-1], False)
+            settings[path] = bool(getattr(owner, parts[-1]))
+    return settings
+
+
 def measure(torch, case, device, warmup, iterations):
     api = device_api(torch, device)
     sync = api.synchronize if api else lambda: None
@@ -200,16 +218,12 @@ def main():
     api = device_api(torch, args.device)
     torch.set_num_threads(args.threads)
     torch.manual_seed(args.seed)
-    if hasattr(torch.backends, "cuda"):
-        torch.backends.cuda.matmul.allow_tf32 = False
-    if hasattr(torch.backends, "cudnn"):
-        torch.backends.cudnn.allow_tf32 = False
-        torch.backends.cudnn.benchmark = False
-    torch.set_float32_matmul_precision("highest")
+    precision_settings = configure_precision(torch)
     device_name = api.get_device_name() if api and hasattr(api, "get_device_name") else platform.processor() or args.device
     run = {"name": args.name, "device": {"name": device_name, "backend": args.device.split(":")[0], "platform": platform.platform()},
            "torch_version": torch.__version__, "backend_version": args.backend_version,
            "timing_method": "synchronized_wall_per_iteration", "precision_policy": "highest; TF32 disabled where exposed",
+           "precision_settings": precision_settings,
            "cpu_threads": args.threads, "warmup": args.warmup, "iterations": args.iterations, "seed": args.seed,
            "template": template.get("name", args.template), "synthetic": False,
            "timing_note": "Median synchronized wall includes dispatch and terminal synchronization. GPU events may include stream idle time. CPU enqueue excludes final synchronization. Backward graph prepared before timing. CPU stream/enqueue/memory metrics are null."}
