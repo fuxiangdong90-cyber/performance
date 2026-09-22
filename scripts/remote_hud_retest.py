@@ -12,7 +12,7 @@ def main():
  commit=subprocess.check_output(['git','-C',str(source),'rev-parse','HEAD'],text=True).strip()
  if commit!=manifest['source']['commit']:raise RuntimeError('Source commit differs from historical baseline')
  runner=source/'scripts/run-pytorch-operator-benchmark-hygon.sh'
- state={'phase':'prepared','source_commit':commit,'runner_sha256':hashlib.sha256(runner.read_bytes()).hexdigest(),'image_id':actual,'runs':[],'blocked_targets':['49112: publickey authentication denied','49154: publickey authentication denied'],'database_upload':'pending: direct route to backend unavailable','large_difference_threshold':.2}
+ state={'phase':'prepared','source_commit':commit,'runner_sha256':hashlib.sha256(runner.read_bytes()).hexdigest(),'image_id':actual,'runs':[],'scope':'49122 baseline replay only; other hosts deferred by user','database_upload':'pending: direct route to backend unavailable','large_difference_threshold':.2}
  def save():
   state['updated_at']=datetime.datetime.now(datetime.timezone.utc).isoformat();tmp=job/'status.tmp';tmp.write_text(json.dumps(state,indent=2));tmp.replace(job/'status.json')
  save()
@@ -22,7 +22,7 @@ def main():
   if target.exists():raise RuntimeError('Refusing to overwrite run '+name)
   state['phase']='running_'+str(index);save()
   env={'RUN_NAME':name,'WORK_ROOT':'/workspace/opbench-hud/work/'+name,'RESULT_ROOT':'/workspace/results/'+name,'STATE_ROOT':'/tmp/'+name,'IMAGE_DIGEST':actual,'SMOKE_RESULT_ROOT':'/workspace/results/bw1100-c8bbc83-formal-smoke-r01','GPU_INDICES':'0,1,2,3,4,5,6,7','CPU_THREADS':'1','CORES_PER_DEVICE':'2','CASE_TIMEOUT_SECONDS':'7200'}
-  command=['docker','exec']
+  command=['docker','exec','-w','/workspace/opbench-hud']
   for k,v in env.items():command+=['-e',k+'='+v]
   command += [a.container,'bash','/workspace/opbench-hud/scripts/run-pytorch-operator-benchmark-hygon.sh']
   with (job/(name+'.log')).open('w') as log:rc=subprocess.run(command,stdout=log,stderr=subprocess.STDOUT).returncode
